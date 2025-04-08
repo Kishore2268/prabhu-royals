@@ -24,7 +24,7 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
-    origin: [process.env.USER_FRONTEND_URL, process.env.ADMIN_FRONTEND_URL, 'https://royal-mobiles-user.vercel.app'],
+    origin: [process.env.USER_FRONTEND_URL, process.env.ADMIN_FRONTEND_URL],
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -33,7 +33,7 @@ const io = new Server(httpServer, {
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: [process.env.USER_FRONTEND_URL, process.env.ADMIN_FRONTEND_URL, 'https://royal-mobiles-prabhu.vercel.app'],
+  origin: [process.env.USER_FRONTEND_URL, process.env.ADMIN_FRONTEND_URL],
   credentials: true
 }));
 
