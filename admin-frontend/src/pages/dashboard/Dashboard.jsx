@@ -87,16 +87,20 @@ const Dashboard = () => {
         getOrders({ limit: 5, sort: '-createdAt' }) // Get 5 most recent orders
       ]);
 
-      // Set stats
+      console.log('Products response:', productsRes.data); // Debug log
+
+      // Set stats with proper error handling
       setStats({
-        categories: categoriesRes.data?.data?.length || 0,
-        subcategories: subcategoriesRes.data?.data?.length || 0,
-        products: productsRes.data?.data?.length || 0,
-        orders: ordersRes.data?.data?.length || 0,
+        categories: categoriesRes?.data?.data?.length || 0,
+        subcategories: subcategoriesRes?.data?.data?.length || 0,
+        products: productsRes?.data?.data?.products?.length || 0,
+        orders: ordersRes?.data?.data?.length || 0,
       });
 
-      // Set recent orders
-      setRecentOrders(ordersRes.data?.orders || []);
+      // Set recent orders with proper error handling
+      if (ordersRes?.data?.data) {
+        setRecentOrders(ordersRes.data.data);
+      }
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -111,7 +115,7 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <div className="container  mx-auto px-4 py-8 space-y-6">
+    <div className="container mx-auto px-4 py-8 space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
         <p className="mt-1 text-sm text-gray-500">
@@ -193,7 +197,7 @@ const Dashboard = () => {
                                 </span>
                               </p>
                               <p className="text-sm text-gray-500">
-                                Order total: ₹{order.total?.toFixed(2) || '0.00'}
+                                Order total: ₹{order.totalAmount?.toFixed(2) || '0.00'}
                               </p>
                             </div>
                             <div className="text-right text-sm whitespace-nowrap text-gray-500">

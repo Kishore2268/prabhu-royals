@@ -125,11 +125,14 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
   const limit = parseInt(req.query.limit) || 12;
   const skip = (page - 1) * limit;
   
+  // Create a more flexible search query
   const searchQuery = {
     $or: [
       { name: { $regex: query, $options: 'i' } },
-      { description: { $regex: query, $options: 'i' } }
-    ]
+      { description: { $regex: query, $options: 'i' } },
+      { brand: { $regex: query, $options: 'i' } }
+    ],
+    active: true
   };
   
   const sort = buildSortOptions(req.query.sort);
@@ -145,14 +148,12 @@ exports.searchProducts = catchAsync(async (req, res, next) => {
   
   res.status(200).json({
     status: 'success',
-    data: {
-      products,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit)
-      }
+    data: products,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit)
     }
   });
 });

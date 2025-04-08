@@ -34,10 +34,19 @@ const Orders = () => {
         sortOrder,
         ...filters,
       });
-      setOrders(response.data.orders || []);
-      setTotalPages(Math.ceil(response.data.total / itemsPerPage));
+      
+      if (response?.data?.data) {
+        setOrders(response.data.data);
+        setTotalPages(Math.ceil(response.data.total / itemsPerPage));
+      } else {
+        setOrders([]);
+        setTotalPages(1);
+      }
     } catch (error) {
+      console.error('Error fetching orders:', error);
       toast.error('Failed to fetch orders');
+      setOrders([]);
+      setTotalPages(1);
     } finally {
       setIsLoading(false);
     }

@@ -22,7 +22,7 @@ export const NotificationProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      const newSocket = io(process.env.REACT_APP_API_URL || 'http://localhost:5000');
+      const newSocket = io(process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
       setSocket(newSocket);
 
       newSocket.on('connect', () => {

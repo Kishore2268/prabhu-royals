@@ -74,7 +74,7 @@ const Cart = () => {
   };
 
   const calculateTax = () => {
-    return calculateSubtotal() * 0.1; // 10% tax
+    return calculateSubtotal() * 0; // 10% tax
   };
 
   const calculateTotal = () => {
@@ -94,16 +94,45 @@ const Cart = () => {
     setIsLoading(true);
     try {
       const orderData = {
-        ...formData,
-        items: cart,
-        subtotal: calculateSubtotal(),
-        shipping: calculateShipping(),
-        tax: calculateTax(),
-        total: calculateTotal(),
-        status: 'pending'
+        user: {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          address: {
+            street: formData.address,
+            city: formData.city,
+            state: formData.state,
+            country: 'India',
+            zipCode: formData.pincode
+          }
+        },
+        orderItems: cart.map(item => ({
+          product: item._id.toString(),
+          name: item.name,
+          price: Number(item.price),
+          quantity: Number(item.quantity),
+          image: item.images?.[0] || { url: '' }
+        })),
+        itemsPrice: Number(calculateSubtotal()),
+        shippingPrice: Number(calculateShipping()),
+        taxPrice: Number(calculateTax()),
+        totalPrice: Number(calculateTotal()),
+        orderStatus: 'received',
+        paymentInfo: {
+          type: formData.paymentMethod,
+          status: 'pending',
+          id: '',
+          update_time: new Date().toISOString()
+        },
+        isPaid: false,
+        isDelivered: false
       };
 
-      await createOrder(orderData);
+      console.log('Sending order data:', orderData);
+
+      const response = await createOrder(orderData);
+      console.log('Order response:', response);
+
       toast.success('Order placed successfully!');
       setCart([]);
       setShowCheckoutForm(false);
@@ -118,8 +147,8 @@ const Cart = () => {
         paymentMethod: 'cod'
       });
     } catch (error) {
-      toast.error('Failed to place order');
-      console.error('Checkout error:', error);
+      console.error('Checkout error details:', error.response?.data || error);
+      toast.error(error.response?.data?.message || 'Failed to place order');
     } finally {
       setIsLoading(false);
     }

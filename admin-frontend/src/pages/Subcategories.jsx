@@ -1,33 +1,62 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { getSubcategories, getCategory } from '../services/api';
+import { SubcategoryCard } from '../components/ui/Card';
+import Spinner from '../components/ui/Spinner';
+import { toast } from 'react-hot-toast';
 
 const Subcategories = () => {
+  const { categoryId } = useParams();
   const [subcategories, setSubcategories] = useState([]);
   const [category, setCategory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [categoryId, setCategoryId] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [subcategoriesResponse, categoryResponse] = await Promise.all([
-          getSubcategories(),
+        setLoading(true);
+        const [subcategoriesRes, categoryRes] = await Promise.all([
+          getSubcategories({ category: categoryId }),
           getCategory(categoryId)
         ]);
-        setSubcategories(subcategoriesResponse.data.data || []);
-        setCategory(categoryResponse.data.data);
+
+        if (subcategoriesRes?.data?.data) {
+          setSubcategories(subcategoriesRes.data.data);
+        }
+        
+        if (categoryRes?.data?.data) {
+          setCategory(categoryRes.data.data);
+        }
       } catch (err) {
-        setError('Failed to load data');
         console.error('Error fetching data:', err);
+        setError('Failed to load data');
+        toast.error('Failed to load subcategories');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    if (categoryId) {
+      fetchData();
+    }
   }, [categoryId]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -38,14 +67,18 @@ const Subcategories = () => {
             <p className="text-gray-600 mt-1">Category: {category.name}</p>
           )}
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700"
-        >
-          Add Subcategory
-        </button>
       </div>
-      {/* ... rest of the existing code ... */}
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {subcategories.map((subcategory) => (
+          <SubcategoryCard
+            key={subcategory._id}
+            image={subcategory.image?.url}
+            title={subcategory.name}
+            productCount={subcategory.products?.length || 0}
+          />
+        ))}
+      </div>
     </div>
   );
 };

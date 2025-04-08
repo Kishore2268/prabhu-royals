@@ -198,7 +198,7 @@ const Categories = () => {
       </div>
 
       {/* Categories Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
         {isLoading && categories.length === 0 ? (
           Array(8).fill(0).map((_, index) => (
             <CategorySkeleton key={index} />
@@ -214,7 +214,7 @@ const Categories = () => {
         ) : (
           categories.map((category) => (
             <div key={category._id} className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="relative h-48">
+              <div className="relative h-64 sm:h-64 md:h-72">
                 {category.image ? (
                   <img
                     src={category.image.url}

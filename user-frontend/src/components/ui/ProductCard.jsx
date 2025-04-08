@@ -49,6 +49,7 @@ const ProductCard = ({ product }) => {
             <ShoppingCart className="h-5 w-5" />
           </button>
         </div>
+        
         <div className="mt-2">
           <span className={`text-sm ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
             {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}

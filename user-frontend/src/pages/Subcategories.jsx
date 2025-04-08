@@ -1,35 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getSubcategoriesByCategory } from '../services/api';
+import { getSubcategoriesByCategory, getCategory } from '../services/api';
 import { SubcategoryCard } from '../components/ui/Card';
 import Spinner from '../components/ui/Spinner';
 import { FolderTree } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 const Subcategories = () => {
   const { categoryId } = useParams();
   const [subcategories, setSubcategories] = useState([]);
+  const [category, setCategory] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchSubcategories = async () => {
+    const fetchData = async () => {
       try {
-        const response = await getSubcategoriesByCategory(categoryId);
-        if (response?.data?.data) {
-          setSubcategories(response.data.data);
+        setLoading(true);
+        const [subcategoriesRes, categoryRes] = await Promise.all([
+          getSubcategoriesByCategory(categoryId),
+          getCategory(categoryId)
+        ]);
+
+        if (subcategoriesRes?.data?.data) {
+          setSubcategories(subcategoriesRes.data.data);
         } else {
           setError('No subcategories found');
         }
+
+        if (categoryRes?.data?.data) {
+          setCategory(categoryRes.data.data);
+        }
       } catch (err) {
+        console.error('Error fetching data:', err);
         setError('Failed to load subcategories');
-        console.error('Error fetching subcategories:', err);
+        toast.error('Failed to load subcategories');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSubcategories();
+    if (categoryId) {
+      fetchData();
+    }
   }, [categoryId]);
 
   const handleSubcategoryClick = (subcategoryId) => {
@@ -63,9 +77,14 @@ const Subcategories = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-24">
-      <h1 className="text-3xl font-bold mb-8">Subcategories</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold">Subcategories</h1>
+        {category && (
+          <p className="text-gray-600 mt-2">Category: {category.name}</p>
+        )}
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {subcategories.map((subcategory) => (
           <SubcategoryCard
             key={subcategory._id}

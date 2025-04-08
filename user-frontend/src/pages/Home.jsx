@@ -15,6 +15,7 @@ const Home = () => {
     const fetchCategories = async () => {
       try {
         const response = await getCategories();
+        console.log('Categories response:', response.data); // Debug log
         setCategories(response.data.data || []);
       } catch (err) {
         setError('Failed to load categories');
@@ -58,17 +59,35 @@ const Home = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-24">
+    <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8">Categories</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {categories.map((category) => (
-          <CategoryCard
+          <div
             key={category._id}
-            image={category.image}
-            title={category.name}
-            productCount={category.products?.length || 0}
+            className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow duration-300"
             onClick={() => handleCategoryClick(category._id)}
-          />
+          >
+            <div className="relative h-48">
+              {category.image ? (
+                <img
+                  src={category.image.url}
+                  alt={category.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                  <FolderTree className="h-12 w-12 text-gray-400" />
+                </div>
+              )}
+            </div>
+            <div className="p-4">
+              <h3 className="text-lg font-semibold text-gray-900">{category.name}</h3>
+              <p className="text-sm text-gray-500 mt-1">
+                {category.subcategories?.length || 0} Subcategories
+              </p>
+            </div>
+          </div>
         ))}
       </div>
     </div>

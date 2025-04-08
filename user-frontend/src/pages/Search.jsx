@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { searchProducts } from '../services/api';
 import { ProductCard } from '../components/ui/Card';
@@ -15,24 +15,36 @@ const Search = () => {
   const [quantities, setQuantities] = useState({});
   const { addToCart } = useCart();
 
-  useEffect(() => {
-    const fetchSearchResults = async () => {
-      if (!query) return;
-      
-      try {
-        setIsLoading(true);
-        const response = await searchProducts(query);
-        setProducts(response.data.data || []);
-      } catch (error) {
-        toast.error('Failed to fetch search results');
-        console.error('Search error:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchSearchResults = useCallback(async () => {
+    if (!query) {
+      setProducts([]);
+      setIsLoading(false);
+      return;
+    }
 
-    fetchSearchResults();
+    try {
+      setIsLoading(true);
+      const response = await searchProducts(query);
+      
+      // Handle the updated response structure
+      if (response?.data?.data) {
+        setProducts(response.data.data);
+      } else {
+        console.error('Unexpected API response structure:', response);
+        setProducts([]);
+      }
+    } catch (error) {
+      console.error('Error searching products:', error);
+      toast.error('Failed to search products');
+      setProducts([]);
+    } finally {
+      setIsLoading(false);
+    }
   }, [query]);
+
+  useEffect(() => {
+    fetchSearchResults();
+  }, [fetchSearchResults]);
 
   const handleQuantityChange = (productId, newQuantity) => {
     if (newQuantity < 1) return;
@@ -75,7 +87,7 @@ const Search = () => {
         Search Results for "{query}"
       </h1>
 
-      {products.length === 0 ? (
+      {!products || products.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12">
           <Package className="w-24 h-24 text-gray-400 mb-4" />
           <h3 className="text-xl font-semibold text-gray-600 mb-2">No Products Found</h3>

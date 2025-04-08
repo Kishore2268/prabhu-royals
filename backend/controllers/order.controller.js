@@ -39,23 +39,48 @@ exports.getOrder = asyncHandler(async (req, res) => {
 // @route   POST /api/orders
 // @access  Public
 exports.createOrder = asyncHandler(async (req, res) => {
-  const order = await Order.create(req.body);
+  try {
+    console.log('Creating order with data:', JSON.stringify(req.body, null, 2));
+    
+    // Create the order first
+    const order = await Order.create(req.body);
+    console.log('Order created successfully:', order._id);
 
-  // Send order confirmation email to user
-  await sendOrderConfirmationEmail(order);
+    // Try to send email, but don't fail the order if email fails
+    try {
+      await sendOrderConfirmationEmail(order);
+      console.log('Order confirmation email sent');
+    } catch (emailError) {
+      console.error('Error sending order confirmation email:', emailError);
+      // Continue with order creation even if email fails
+    }
 
-  // Create notification for new order
-  await Notification.create({
-    title: 'New Order Received',
-    message: `Order #${order._id} has been received from ${order.user.name}`,
-    type: 'order',
-    data: { orderId: order._id }
-  });
+    // Try to create notification, but don't fail the order if notification fails
+    try {
+      await Notification.create({
+        title: 'New Order Received',
+        message: `Order #${order._id} has been received from ${order.user.name}`,
+        type: 'order',
+        data: { orderId: order._id }
+      });
+      console.log('Order notification created');
+    } catch (notificationError) {
+      console.error('Error creating order notification:', notificationError);
+      // Continue with order creation even if notification fails
+    }
 
-  res.status(201).json({
-    success: true,
-    data: order
-  });
+    res.status(201).json({
+      success: true,
+      data: order
+    });
+  } catch (error) {
+    console.error('Error creating order:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating order',
+      error: error.message
+    });
+  }
 });
 
 // @desc    Update order status

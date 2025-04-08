@@ -419,7 +419,7 @@ const Products = () => {
       </div>
 
       {/* Products Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
         {isLoading && products.length === 0 ? (
           Array(8).fill(0).map((_, index) => (
             <ProductSkeleton key={index} />
@@ -435,7 +435,7 @@ const Products = () => {
         ) : (
           products.map((product) => (
             <div key={product._id} className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="relative h-48">
+              <div className="relative h-64 sm:h-64 md:h-72">
                 {product.images?.[0] ? (
                   <img
                     src={product.images[0].url}
@@ -467,7 +467,7 @@ const Products = () => {
                 <p className="text-sm text-gray-500 mt-1 line-clamp-2">{product.description}</p>
                 <div className="mt-2 flex justify-between items-center">
                   <span className="text-lg font-bold text-primary-600">
-                    ${product.price.toFixed(2)}
+                  ₹{product.price.toFixed(2)}
                   </span>
                   <span className={`text-sm ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {product.stock > 0 ? `${product.stock} in stock` : 'Out of stock'}

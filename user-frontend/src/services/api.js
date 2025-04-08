@@ -36,28 +36,29 @@ api.interceptors.response.use(
 );
 
 // Categories
-export const getCategories = (params) => api.get('/categories', { params });
+export const getCategories = () => api.get('/categories');
 export const getCategory = (id) => api.get(`/categories/${id}`);
-export const getSubcategoriesByCategory = (categoryId) => api.get(`/categories/${categoryId}/subcategories`);
 
 // Subcategories
 export const getSubcategories = (params) => api.get('/subcategories', { params });
-export const getSubcategory = (id) => api.get(`/subcategories/${id}`);
-export const getProductsBySubcategory = (subcategoryId, params) => api.get(`/subcategories/${subcategoryId}/products`, { params });
 export const getAllSubcategories = (params) => api.get('/subcategories/all', { params });
+export const getSubcategoriesByCategory = (categoryId) => 
+  api.get(`/subcategories`, { params: { category: categoryId } });
+export const getSubcategory = (id) => api.get(`/subcategories/${id}`);
 
 // Products
 export const getProducts = (params) => api.get('/products', { params });
-export const getProduct = (id) => api.get(`/products/${id}`);
 export const getAllProducts = (params) => api.get('/products/all', { params });
-export const searchProducts = (query, params) => api.get('/products/search', { params: { query, ...params } });
+export const getProductsBySubcategory = (subcategoryId) => 
+  api.get(`/products`, { params: { subcategory: subcategoryId } });
+export const getProduct = (id) => api.get(`/products/${id}`);
+export const searchProducts = (query) => 
+  api.get('/products/search', { params: { query } });
 
 // Orders
 export const createOrder = (orderData) => api.post('/orders', orderData);
-
-// Reviews
-export const createReview = (productId, reviewData) => api.post(`/products/${productId}/reviews`, reviewData);
-export const getReviews = (productId) => api.get(`/products/${productId}/reviews`);
+export const getOrders = (params) => api.get('/orders', { params });
+export const getOrder = (id) => api.get(`/orders/${id}`);
 
 // Cart (local storage based)
 export const getCart = () => {
@@ -65,14 +66,14 @@ export const getCart = () => {
   return cart ? JSON.parse(cart) : [];
 };
 
-export const addToCart = (product) => {
+export const addToCart = (product, quantity = 1) => {
   const cart = getCart();
   const existingItem = cart.find(item => item._id === product._id);
   
   if (existingItem) {
-    existingItem.quantity += 1;
+    existingItem.quantity += quantity;
   } else {
-    cart.push({ ...product, quantity: 1 });
+    cart.push({ ...product, quantity });
   }
   
   localStorage.setItem('cart', JSON.stringify(cart));
@@ -101,5 +102,9 @@ export const clearCart = () => {
   localStorage.removeItem('cart');
   return [];
 };
+
+// Reviews
+export const createReview = (productId, reviewData) => api.post(`/products/${productId}/reviews`, reviewData);
+export const getReviews = (productId) => api.get(`/products/${productId}/reviews`);
 
 export default api; 

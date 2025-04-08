@@ -9,22 +9,25 @@ import Cart from './pages/Cart';
 import AllProducts from './pages/AllProducts';
 import AllSubcategories from './pages/AllSubcategories';
 import Search from './pages/Search';
+import { CartProvider } from './context/CartContext';
 
 const App = () => {
   return (
     <Router>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="subcategories/:categoryId" element={<Subcategories />} />
-          <Route path="products/:subcategoryId" element={<Products />} />
-          <Route path="cart" element={<Cart />} />
-          <Route path="all-products" element={<AllProducts />} />
-          <Route path="all-subcategories" element={<AllSubcategories />} />
-          <Route path="search" element={<Search />} />
-        </Route>
-      </Routes>
-      <Toaster position="top-right" />
+      <CartProvider>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="subcategories/:categoryId" element={<Subcategories />} />
+            <Route path="products/:subcategoryId" element={<Products />} />
+            <Route path="cart" element={<Cart />} />
+            <Route path="all-products" element={<AllProducts />} />
+            <Route path="all-subcategories" element={<AllSubcategories />} />
+            <Route path="search" element={<Search />} />
+          </Route>
+        </Routes>
+        <Toaster position="top-right" />
+      </CartProvider>
     </Router>
   );
 };
