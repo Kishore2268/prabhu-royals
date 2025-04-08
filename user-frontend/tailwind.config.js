@@ -22,6 +22,7 @@ module.exports = {
       maxWidth: {
         '8xl': '100rem',
         '9xl': '120rem',
+        '10xl': '140rem',
       },
       aspectRatio: {
         'w-16': '16',
