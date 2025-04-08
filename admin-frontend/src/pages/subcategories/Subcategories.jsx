@@ -238,7 +238,7 @@ const Subcategories = () => {
         ) : (
           subcategories.map((subcategory) => (
             <div key={subcategory._id} className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="relative h-48">
+              <div className="relative h-64 sm:h-72 md:h-80">
                 {subcategory.image ? (
                   <img
                     src={subcategory.image.url}
@@ -269,7 +269,7 @@ const Subcategories = () => {
                 <h3 className="text-lg font-semibold text-gray-900">{subcategory.name}</h3>
                 <p className="text-sm text-gray-500 mt-1">{subcategory.description}</p>
                 <p className="text-sm text-primary-600 mt-2">
-                  Category: {subcategory.category?.name || 'Uncategorized'}
+                  Category: {subcategory.category?.name || 'Loading...'}
                 </p>
               </div>
             </div>

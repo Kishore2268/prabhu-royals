@@ -89,10 +89,10 @@ const Dashboard = () => {
 
       // Set stats
       setStats({
-        categories: categoriesRes.data?.categories?.length || 0,
-        subcategories: subcategoriesRes.data?.subcategories?.length || 0,
-        products: productsRes.data?.total || 0,
-        orders: ordersRes.data?.total || 0,
+        categories: categoriesRes.data?.data?.length || 0,
+        subcategories: subcategoriesRes.data?.data?.length || 0,
+        products: productsRes.data?.data?.length || 0,
+        orders: ordersRes.data?.data?.length || 0,
       });
 
       // Set recent orders
@@ -193,7 +193,7 @@ const Dashboard = () => {
                                 </span>
                               </p>
                               <p className="text-sm text-gray-500">
-                                Order total: ${order.total?.toFixed(2) || '0.00'}
+                                Order total: ₹{order.total?.toFixed(2) || '0.00'}
                               </p>
                             </div>
                             <div className="text-right text-sm whitespace-nowrap text-gray-500">

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { getProductsBySubcategory } from '../services/api';
-import { addToCart } from '../services/api';
+import { getProductsBySubcategory, addToCart, updateCartItemQuantity } from '../services/api';
 import { ProductCard } from '../components/ui/Card';
 import Spinner from '../components/ui/Spinner';
 import { toast } from 'react-hot-toast';
@@ -13,6 +12,7 @@ const Products = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [quantities, setQuantities] = useState({});
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 12,
@@ -57,9 +57,18 @@ const Products = () => {
     fetchProducts();
   }, [subcategoryId, currentPage, currentSort, currentMinPrice, currentMaxPrice, pagination.limit]);
 
+  const handleQuantityChange = (productId, newQuantity) => {
+    if (newQuantity < 1) return;
+    setQuantities(prev => ({
+      ...prev,
+      [productId]: newQuantity
+    }));
+  };
+
   const handleAddToCart = (product) => {
     try {
-      addToCart(product);
+      const quantity = quantities[product._id] || 1;
+      addToCart({ ...product, quantity });
       toast.success('Product added to cart');
     } catch (err) {
       toast.error('Failed to add product to cart');
@@ -164,6 +173,8 @@ const Products = () => {
             title={product.name}
             description={product.description}
             price={product.price}
+            quantity={quantities[product._id] || 1}
+            onQuantityChange={(newQuantity) => handleQuantityChange(product._id, newQuantity)}
             onAddToCart={() => handleAddToCart(product)}
           />
         ))}

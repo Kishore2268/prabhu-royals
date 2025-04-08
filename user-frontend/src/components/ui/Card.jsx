@@ -49,10 +49,10 @@ export const SubcategoryCard = ({ image, title, productCount, onClick }) => {
   );
 };
 
-export const ProductCard = ({ image, title, description, price, onAddToCart, onEdit, onDelete }) => {
+export const ProductCard = ({ image, title, description, price, onAddToCart, onEdit, onDelete, onQuantityChange, quantity }) => {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="relative h-48">
+      <div className="relative h-64 sm:h-72 md:h-80">
         <img
           src={image}
           alt={title}
@@ -62,19 +62,45 @@ export const ProductCard = ({ image, title, description, price, onAddToCart, onE
           }}
         />
         {onAddToCart && (
-          <button
-            onClick={onAddToCart}
-            className="absolute bottom-2 right-2 bg-primary-600 text-white p-2 rounded-full hover:bg-primary-700 transition-colors duration-300"
-          >
-            <ShoppingCart className="h-5 w-5" />
-          </button>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onQuantityChange && onQuantityChange(quantity - 1);
+                }}
+                className="bg-gray-100 p-1 rounded-md hover:bg-gray-200"
+              >
+                -
+              </button>
+              <span className="w-8 text-center">{quantity || 1}</span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onQuantityChange && onQuantityChange(quantity + 1);
+                }}
+                className="bg-gray-100 p-1 rounded-md hover:bg-gray-200"
+              >
+                +
+              </button>
+            </div>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddToCart();
+              }}
+              className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 transition-colors duration-300"
+            >
+              Add to Cart
+            </button>
+          </div>
         )}
       </div>
       <div className="p-4">
         <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
         <p className="text-sm text-gray-500 mb-2 line-clamp-2">{description}</p>
         <div className="flex items-center justify-between">
-          <span className="text-lg font-bold text-primary-600">${price}</span>
+          <span className="text-lg font-bold text-primary-600">₹{price}</span>
           {(onEdit || onDelete) && (
             <div className="flex space-x-2">
               {onEdit && (

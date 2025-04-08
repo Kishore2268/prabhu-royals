@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { getAllProducts } from '../services/api';
+import { getAllProducts, addToCart } from '../services/api';
 import { ProductCard } from '../components/ui/Card';
 import { toast } from 'react-hot-toast';
 import { PackageX } from 'lucide-react';
@@ -10,6 +9,7 @@ const AllProducts = () => {
   const [products, setProducts] = useState([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [quantities, setQuantities] = useState({});
 
   const fetchProducts = async (pageNum = 1) => {
     try {
@@ -35,6 +35,24 @@ const AllProducts = () => {
     fetchProducts();
   }, []);
 
+  const handleQuantityChange = (productId, newQuantity) => {
+    if (newQuantity < 1) return;
+    setQuantities(prev => ({
+      ...prev,
+      [productId]: newQuantity
+    }));
+  };
+
+  const handleAddToCart = (product) => {
+    try {
+      const quantity = quantities[product._id] || 1;
+      addToCart({ ...product, quantity });
+      toast.success('Product added to cart');
+    } catch (error) {
+      toast.error('Failed to add product to cart');
+    }
+  };
+
   const loadMore = () => {
     if (!isLoading && hasMore) {
       const nextPage = page + 1;
@@ -46,7 +64,7 @@ const AllProducts = () => {
   if (products.length === 0 && !isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-gray-500">
-        <PackageX className="h-16 w-16 mb-4" /> {/* Larger icon */}
+        <PackageX className="h-16 w-16 mb-4" />
         <h2 className="text-xl font-semibold mb-2">No Products Found</h2>
         <p className="text-center">There are no products available.</p>
       </div>
@@ -75,17 +93,16 @@ const AllProducts = () => {
           ))
         ) : (
           products.map((product) => (
-            <Link 
-              key={product._id} 
-              to={`/products/${product._id}`}
-            >
-              <ProductCard
-                image={product.images[0]?.url || 'https://via.placeholder.com/300x200?text=No+Image'}
-                title={product.name}
-                price={product.price}
-                stock={product.stock}
-              />
-            </Link>
+            <ProductCard
+              key={product._id}
+              image={product.images[0]?.url || 'https://via.placeholder.com/300x200?text=No+Image'}
+              title={product.name}
+              description={product.description}
+              price={product.price}
+              quantity={quantities[product._id] || 1}
+              onQuantityChange={(newQuantity) => handleQuantityChange(product._id, newQuantity)}
+              onAddToCart={() => handleAddToCart(product)}
+            />
           ))
         )}
       </div>

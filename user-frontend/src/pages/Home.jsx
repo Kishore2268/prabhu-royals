@@ -28,7 +28,7 @@ const Home = () => {
   }, []);
 
   const handleCategoryClick = (categoryId) => {
-    navigate(`/subcategories/${categoryId}`);
+    navigate(`/categories/${categoryId}/subcategories`);
   };
 
   if (loading) {
