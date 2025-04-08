@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getSubcategoriesByCategory } from '../services/api';
 import { SubcategoryCard } from '../components/ui/Card';
@@ -16,7 +16,11 @@ const Subcategories = () => {
     const fetchSubcategories = async () => {
       try {
         const response = await getSubcategoriesByCategory(categoryId);
-        setSubcategories(response.data.data || []);
+        if (response?.data?.data) {
+          setSubcategories(response.data.data);
+        } else {
+          setError('No subcategories found');
+        }
       } catch (err) {
         setError('Failed to load subcategories');
         console.error('Error fetching subcategories:', err);
@@ -65,7 +69,7 @@ const Subcategories = () => {
         {subcategories.map((subcategory) => (
           <SubcategoryCard
             key={subcategory._id}
-            image={subcategory.image}
+            image={subcategory.image?.url}
             title={subcategory.name}
             productCount={subcategory.products?.length || 0}
             onClick={() => handleSubcategoryClick(subcategory._id)}

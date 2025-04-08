@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Trash2, Plus, Minus, ShoppingCart } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { getCart, updateCartItemQuantity, removeFromCart } from '../services/api';
+import { getCart, updateCartItemQuantity, removeFromCart, createOrder } from '../services/api';
 import Spinner from '../components/ui/Spinner';
 
 const Cart = () => {
@@ -10,6 +10,17 @@ const Cart = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showCheckoutForm, setShowCheckoutForm] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    pincode: '',
+    paymentMethod: 'cod'
+  });
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -70,14 +81,48 @@ const Cart = () => {
     return calculateSubtotal() + calculateShipping() + calculateTax();
   };
 
-  const handleCheckout = () => {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleCheckout = async (e) => {
+    e.preventDefault();
     setIsLoading(true);
-    // TODO: Implement checkout functionality
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const orderData = {
+        ...formData,
+        items: cart,
+        subtotal: calculateSubtotal(),
+        shipping: calculateShipping(),
+        tax: calculateTax(),
+        total: calculateTotal(),
+        status: 'pending'
+      };
+
+      await createOrder(orderData);
       toast.success('Order placed successfully!');
       setCart([]);
-    }, 1500);
+      setShowCheckoutForm(false);
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        address: '',
+        city: '',
+        state: '',
+        pincode: '',
+        paymentMethod: 'cod'
+      });
+    } catch (error) {
+      toast.error('Failed to place order');
+      console.error('Checkout error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (loading) {
@@ -127,7 +172,7 @@ const Cart = () => {
               >
                 <div className="h-24 w-24 flex-shrink-0">
                   <img
-                    src={item.images?.[0] || 'https://placehold.co/150x150'}
+                    src={item.images?.[0]?.url || 'https://placehold.co/150x150'}
                     alt={item.name}
                     className="h-full w-full object-cover rounded-md"
                     onError={(e) => {
@@ -140,7 +185,7 @@ const Cart = () => {
                     {item.name}
                   </h3>
                   <p className="text-sm text-gray-500">
-                    ${item.price.toFixed(2)}
+                    ₹{item.price.toFixed(2)}
                   </p>
                   <div className="mt-2 flex items-center space-x-2">
                     <button
@@ -172,7 +217,7 @@ const Cart = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-medium text-gray-900">
-                    ${(item.price * item.quantity).toFixed(2)}
+                    ₹{(item.price * item.quantity).toFixed(2)}
                   </p>
                 </div>
               </div>
@@ -190,31 +235,31 @@ const Cart = () => {
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Subtotal</span>
                 <span className="text-gray-900">
-                  ${calculateSubtotal().toFixed(2)}
+                  ₹{calculateSubtotal().toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Shipping</span>
                 <span className="text-gray-900">
-                  ${calculateShipping().toFixed(2)}
+                  ₹{calculateShipping().toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Tax</span>
                 <span className="text-gray-900">
-                  ${calculateTax().toFixed(2)}
+                  ₹{calculateTax().toFixed(2)}
                 </span>
               </div>
               <div className="border-t border-gray-200 pt-4">
                 <div className="flex justify-between text-base font-medium">
                   <span className="text-gray-900">Total</span>
                   <span className="text-gray-900">
-                    ${calculateTotal().toFixed(2)}
+                    ₹{calculateTotal().toFixed(2)}
                   </span>
                 </div>
               </div>
               <button
-                onClick={handleCheckout}
+                onClick={() => setShowCheckoutForm(true)}
                 disabled={isLoading}
                 className="w-full mt-4 inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -224,6 +269,124 @@ const Cart = () => {
           </div>
         </div>
       </div>
+
+      {/* Checkout Form Modal */}
+      {showCheckoutForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <h2 className="text-2xl font-bold mb-4">Checkout</h2>
+            <form onSubmit={handleCheckout} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Name</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
+                  required
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Phone</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  required
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Address</label>
+                <textarea
+                  name="address"
+                  value={formData.address}
+                  onChange={handleInputChange}
+                  required
+                  rows={3}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">City</label>
+                  <input
+                    type="text"
+                    name="city"
+                    value={formData.city}
+                    onChange={handleInputChange}
+                    required
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">State</label>
+                  <input
+                    type="text"
+                    name="state"
+                    value={formData.state}
+                    onChange={handleInputChange}
+                    required
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Pincode</label>
+                <input
+                  type="text"
+                  name="pincode"
+                  value={formData.pincode}
+                  onChange={handleInputChange}
+                  required
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Payment Method</label>
+                <select
+                  name="paymentMethod"
+                  value={formData.paymentMethod}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="cod">Cash on Delivery</option>
+                  <option value="online">Online Payment</option>
+                </select>
+              </div>
+              <div className="flex justify-end space-x-4">
+                <button
+                  type="button"
+                  onClick={() => setShowCheckoutForm(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="px-4 py-2 border border-transparent rounded-md text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50"
+                >
+                  {isLoading ? 'Processing...' : 'Place Order'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

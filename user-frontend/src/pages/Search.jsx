@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { searchProducts } from '../services/api';
-import ProductCard from '../components/ui/ProductCard';
+import { ProductCard } from '../components/ui/Card';
 import { toast } from 'react-hot-toast';
 import { Package } from 'lucide-react';
+import Spinner from '../components/ui/Spinner';
+import { useCart } from '../context/CartContext';
 
 const Search = () => {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q');
   const [products, setProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [quantities, setQuantities] = useState({});
+  const { addToCart } = useCart();
 
   useEffect(() => {
     const fetchSearchResults = async () => {
@@ -30,18 +34,37 @@ const Search = () => {
     fetchSearchResults();
   }, [query]);
 
+  const handleQuantityChange = (productId, newQuantity) => {
+    if (newQuantity < 1) return;
+    setQuantities(prev => ({
+      ...prev,
+      [productId]: newQuantity
+    }));
+  };
+
+  const handleAddToCart = (product) => {
+    try {
+      const quantity = quantities[product._id] || 1;
+      addToCart({ ...product, quantity });
+      toast.success('Product added to cart');
+    } catch (error) {
+      toast.error('Failed to add product to cart');
+    }
+  };
+
   if (isLoading) {
     return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  if (!query) {
+    return (
       <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {Array(8).fill(0).map((_, index) => (
-            <div key={index} className="animate-pulse">
-              <div className="bg-gray-200 h-48 rounded-lg mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-            </div>
-          ))}
-        </div>
+        <h1 className="text-2xl font-bold mb-6">Search Products</h1>
+        <p className="text-gray-500">Please enter a search query</p>
       </div>
     );
   }
@@ -63,7 +86,16 @@ const Search = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {products.map((product) => (
-            <ProductCard key={product._id} product={product} />
+            <ProductCard
+              key={product._id}
+              image={product.images[0]}
+              title={product.name}
+              description={product.description}
+              price={product.price}
+              quantity={quantities[product._id] || 1}
+              onQuantityChange={(newQuantity) => handleQuantityChange(product._id, newQuantity)}
+              onAddToCart={() => handleAddToCart(product)}
+            />
           ))}
         </div>
       )}
