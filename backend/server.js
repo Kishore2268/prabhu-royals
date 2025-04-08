@@ -22,34 +22,47 @@ const notificationRoutes = require('./routes/notification.routes');
 // Initialize express app
 const app = express();
 const httpServer = createServer(app);
+
+// Setup Socket.IO with CORS
 const io = new Server(httpServer, {
   cors: {
-    origin: [process.env.USER_FRONTEND_URL, process.env.ADMIN_FRONTEND_URL],
-    methods: ['GET', 'POST'],
+    origin: [
+      'https://royal-mobiles-user.vercel.app',
+      'https://royal-mobiles-prabhu.vercel.app'
+    ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
   }
 });
 
-// Security middleware
+// Middleware
 app.use(helmet());
-app.use(cors({
-  origin: [process.env.USER_FRONTEND_URL, process.env.ADMIN_FRONTEND_URL],
-  credentials: true
-}));
-
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
-});
-app.use(limiter);
-
-// Body parser middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Static files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// ✅ Updated CORS middleware
+app.use(cors({
+  origin: [
+    'https://royal-mobiles-user.vercel.app',
+    'https://royal-mobiles-prabhu.vercel.app'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
+
+// Optional: Rate Limiting (tweak for production if needed)
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100
+});
+app.use(limiter);
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+}).then(() => console.log('MongoDB connected'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -59,35 +72,25 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/notifications', notificationRoutes);
 
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    success: false,
-    message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+// Serve static files for frontend deployment (optional)
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'client', 'build')));
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
   });
-});
+}
 
-// Socket.io connection handling
+// Socket.IO connection
 io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
+  console.log('New client connected');
 
   socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
+    console.log('Client disconnected');
   });
 });
 
-// Make io accessible to other modules
-app.set('io', io);
-
-// Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error('MongoDB connection error:', err));
-
-// Start server
+// Start the server
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-}); 
+});
