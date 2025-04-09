@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, ArrowUpDown, ChevronLeft, ChevronRight, Filter, Eye, ShoppingBag } from 'lucide-react';
+import { Search, ArrowUpDown, ChevronLeft, ChevronRight, Filter, Eye, ShoppingBag, X } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import { toast } from 'react-hot-toast';
-import { getOrders, updateOrderStatus } from '../../services/api';
+import { getOrders, updateOrderStatus, getOrder } from '../../services/api';
+import { format } from 'date-fns';
 
 const Orders = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -37,7 +38,7 @@ const Orders = () => {
       
       if (response?.data?.data) {
         setOrders(response.data.data);
-        setTotalPages(Math.ceil(response.data.total / itemsPerPage));
+        setTotalPages(Math.ceil(response.data.pagination.total / itemsPerPage));
       } else {
         setOrders([]);
         setTotalPages(1);
@@ -94,11 +95,23 @@ const Orders = () => {
     }
   };
 
+  const handleViewOrderDetails = async (orderId) => {
+    try {
+      const response = await getOrder(orderId);
+      if (response?.data?.data) {
+        setSelectedOrder(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+      toast.error('Failed to fetch order details');
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'received':
         return 'bg-orange-100 text-orange-800';
-      case 'delivered':
+      case 'done':
         return 'bg-green-100 text-green-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -106,13 +119,98 @@ const Orders = () => {
   };
 
   const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+    return format(new Date(date), 'MMM d, yyyy h:mm a');
+  };
+
+  const OrderDetailsModal = ({ order, onClose }) => {
+    if (!order) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg max-w-2xl w-full p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold">Order Details #{order._id.slice(-6)}</h2>
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+          
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">Customer Information</h3>
+              <div className="mt-2 text-sm text-gray-500">
+                <p>Name: {order.user.name}</p>
+                <p>Email: {order.user.email}</p>
+                <p>Phone: {order.user.phone}</p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">Shipping Address</h3>
+              <div className="mt-2 text-sm text-gray-500">
+                <p>{order.user.address.street}</p>
+                <p>{order.user.address.city}, {order.user.address.state} {order.user.address.zipCode}</p>
+                <p>{order.user.address.country}</p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">Order Items</h3>
+              <div className="mt-2 space-y-2">
+                {order.orderItems.map((item) => (
+                  <div key={item._id} className="flex items-center justify-between text-sm">
+                    <div>
+                      <p className="font-medium text-gray-900">{item.name}</p>
+                      <p className="text-gray-500">Quantity: {item.quantity}</p>
+                    </div>
+                    <p className="font-medium text-gray-900">₹{(item.price * item.quantity).toFixed(2)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Subtotal</span>
+                <span className="font-medium text-gray-900">₹{order.itemsPrice.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm mt-1">
+                <span className="text-gray-500">Shipping</span>
+                <span className="font-medium text-gray-900">₹{order.shippingPrice.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm mt-1">
+                <span className="text-gray-500">Tax</span>
+                <span className="font-medium text-gray-900">₹{order.taxPrice.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-base font-medium mt-2 pt-2 border-t">
+                <span className="text-gray-900">Total</span>
+                <span className="text-primary-600">₹{order.totalPrice.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">Payment Information</h3>
+              <div className="mt-2 text-sm text-gray-500">
+                <p>Type: {order.paymentInfo.type.toUpperCase()}</p>
+                <p>Status: {order.paymentInfo.status}</p>
+                <p>Payment ID: {order.paymentInfo.id}</p>
+                <p>Paid: {order.isPaid ? 'Yes' : 'No'}</p>
+                {order.paidAt && <p>Paid At: {format(new Date(order.paidAt), 'PPpp')}</p>}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">Order Status</h3>
+              <div className="mt-2 text-sm text-gray-500">
+                <p>Status: {order.orderStatus}</p>
+                <p>Delivered: {order.isDelivered ? 'Yes' : 'No'}</p>
+                {order.deliveredAt && <p>Delivered At: {format(new Date(order.deliveredAt), 'PPpp')}</p>}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const OrderSkeleton = () => (
@@ -162,12 +260,12 @@ const Orders = () => {
             </Button>
             <Button
               variant="outline"
-              onClick={() => handleSort('total')}
+              onClick={() => handleSort('totalPrice')}
               className="flex items-center"
             >
               Total
               <ArrowUpDown className="ml-2 h-4 w-4" />
-              {sortBy === 'total' && (
+              {sortBy === 'totalPrice' && (
                 <span className="ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>
               )}
             </Button>
@@ -197,11 +295,8 @@ const Orders = () => {
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm"
                 >
                   <option value="">All Statuses</option>
-                  <option value="pending">Pending</option>
-                  <option value="processing">Processing</option>
-                  <option value="shipped">Shipped</option>
-                  <option value="delivered">Delivered</option>
-                  <option value="cancelled">Cancelled</option>
+                  <option value="received">Received</option>
+                  <option value="done">Done</option>
                 </select>
               </div>
               <div>
@@ -284,32 +379,29 @@ const Orders = () => {
                     <span className="text-sm font-medium text-gray-900">
                       Order #{order._id.slice(-6)}
                     </span>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.status)}`}>
-                      {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(order.orderStatus)}`}>
+                      {order.orderStatus.charAt(0).toUpperCase() + order.orderStatus.slice(1)}
                     </span>
                   </div>
                   <div className="text-sm text-gray-500">
                     {formatDate(order.createdAt)}
                   </div>
                   <div className="text-sm text-gray-500">
-                    {order.items.length} items • ${order.total.toFixed(2)}
+                    {order.orderItems.length} items • ₹{order.totalPrice.toFixed(2)}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <select
-                    value={order.status}
+                    value={order.orderStatus}
                     onChange={(e) => handleStatusChange(order._id, e.target.value)}
                     className="block w-40 border border-gray-300 rounded-md shadow-sm py-2 px-3 text-sm focus:outline-none focus:ring-primary-500 focus:border-primary-500"
                   >
-                    <option value="pending">Pending</option>
-                    <option value="processing">Processing</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="cancelled">Cancelled</option>
+                    <option value="received">Received</option>
+                    <option value="done">Done</option>
                   </select>
                   <Button
                     variant="outline"
-                    onClick={() => setSelectedOrder(order)}
+                    onClick={() => handleViewOrderDetails(order._id)}
                     className="flex items-center"
                   >
                     <Eye className="w-4 h-4 mr-1" />
@@ -351,73 +443,10 @@ const Orders = () => {
 
       {/* Order Details Modal */}
       {selectedOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full p-6">
-            <h2 className="text-2xl font-bold mb-4">
-              Order Details #{selectedOrder._id.slice(-6)}
-            </h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-lg font-medium text-gray-900">Customer Information</h3>
-                <div className="mt-2 text-sm text-gray-500">
-                  <p>{selectedOrder.customer.name}</p>
-                  <p>{selectedOrder.customer.email}</p>
-                  <p>{selectedOrder.customer.phone}</p>
-                </div>
-              </div>
-              <div>
-                <h3 className="text-lg font-medium text-gray-900">Shipping Address</h3>
-                <div className="mt-2 text-sm text-gray-500">
-                  <p>{selectedOrder.shippingAddress.street}</p>
-                  <p>{selectedOrder.shippingAddress.city}, {selectedOrder.shippingAddress.state} {selectedOrder.shippingAddress.zipCode}</p>
-                  <p>{selectedOrder.shippingAddress.country}</p>
-                </div>
-              </div>
-              <div>
-                <h3 className="text-lg font-medium text-gray-900">Order Items</h3>
-                <div className="mt-2 space-y-2">
-                  {selectedOrder.items.map((item) => (
-                    <div key={item._id} className="flex items-center justify-between text-sm">
-                      <div>
-                        <p className="font-medium text-gray-900">{item.product.name}</p>
-                        <p className="text-gray-500">Quantity: {item.quantity}</p>
-                      </div>
-                      <p className="font-medium text-gray-900">
-                        ${(item.price * item.quantity).toFixed(2)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="border-t pt-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Subtotal</span>
-                  <span className="font-medium text-gray-900">${selectedOrder.subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm mt-1">
-                  <span className="text-gray-500">Shipping</span>
-                  <span className="font-medium text-gray-900">${selectedOrder.shipping.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm mt-1">
-                  <span className="text-gray-500">Tax</span>
-                  <span className="font-medium text-gray-900">${selectedOrder.tax.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-base font-medium mt-2 pt-2 border-t">
-                  <span className="text-gray-900">Total</span>
-                  <span className="text-primary-600">${selectedOrder.total.toFixed(2)}</span>
-                </div>
-              </div>
-              <div className="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
-                <Button
-                  onClick={() => setSelectedOrder(null)}
-                  className="w-full sm:ml-3 sm:w-auto"
-                >
-                  Close
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <OrderDetailsModal
+          order={selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+        />
       )}
     </div>
   );

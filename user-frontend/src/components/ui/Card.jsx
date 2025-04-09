@@ -83,23 +83,23 @@ export const ProductCard = ({ image, title, description, price, onAddToCart, onE
         <div className="flex justify-between items-center mb-4">
           <span className="text-xl font-bold text-primary-600">₹{price}</span>
           {onAddToCart && (
-            <div className="flex items-center space-x-2 bg-gray-100 rounded-md p-1">
+            <div className="flex items-center space-x-1 bg-gray-100 rounded-md p-1">
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onQuantityChange && onQuantityChange(quantity - 1);
                 }}
-                className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 rounded-md transition-colors"
+                className="w-4 sm:w-8 h-6 sm:h-8 flex items-center justify-center hover:bg-gray-200 rounded-md transition-colors"
               >
                 -
               </button>
-              <span className="w-8 text-center font-medium">{quantity || 1}</span>
+              <span className="w-4 sm:w-8 text-center font-medium">{quantity || 1}</span>
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onQuantityChange && onQuantityChange(quantity + 1);
                 }}
-                className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 rounded-md transition-colors"
+                className="w-4 sm:w-8 h-6 sm:h-8 flex items-center justify-center hover:bg-gray-200 rounded-md transition-colors"
               >
                 +
               </button>

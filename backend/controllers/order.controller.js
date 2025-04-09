@@ -46,16 +46,23 @@ exports.createOrder = asyncHandler(async (req, res) => {
     const order = await Order.create(req.body);
     console.log('Order created successfully:', order._id);
 
-    // Try to send email, but don't fail the order if email fails
+    // Try to send email to customer
     try {
       await sendOrderConfirmationEmail(order);
-      console.log('Order confirmation email sent');
+      console.log('Order confirmation email sent to customer');
     } catch (emailError) {
       console.error('Error sending order confirmation email:', emailError);
-      // Continue with order creation even if email fails
     }
 
-    // Try to create notification, but don't fail the order if notification fails
+    // Try to send email to admin
+    try {
+      await sendOrderNotificationEmail(order);
+      console.log('Order notification email sent to admin');
+    } catch (adminEmailError) {
+      console.error('Error sending order notification email to admin:', adminEmailError);
+    }
+
+    // Try to create notification
     try {
       await Notification.create({
         title: 'New Order Received',
@@ -66,7 +73,6 @@ exports.createOrder = asyncHandler(async (req, res) => {
       console.log('Order notification created');
     } catch (notificationError) {
       console.error('Error creating order notification:', notificationError);
-      // Continue with order creation even if notification fails
     }
 
     res.status(201).json({

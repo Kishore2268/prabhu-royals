@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, X } from 'lucide-react';
 import { useNotification } from '../../contexts/NotificationContext';
 import { format } from 'date-fns';
+import { getOrder } from '../../services/api';
 
 const NotificationDropdown = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
   const {
     notifications,
     unreadCount,
@@ -31,7 +33,107 @@ const NotificationDropdown = () => {
     if (!notification.read) {
       await markAsRead(notification._id);
     }
-    // Add navigation logic here if needed
+    if (notification.type === 'order' && notification.data?.orderId) {
+      try {
+        const response = await getOrder(notification.data.orderId);
+        if (response?.data?.data) {
+          setSelectedOrder(response.data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching order details:', error);
+      }
+    }
+  };
+
+  const OrderDetailsModal = ({ order, onClose }) => {
+    if (!order) return null;
+
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="bg-white rounded-lg max-w-2xl w-full p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold">Order Details #{order._id.slice(-6)}</h2>
+            <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+              <X className="h-6 w-6" />
+            </button>
+          </div>
+          
+          <div className="space-y-4">
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">Customer Information</h3>
+              <div className="mt-2 text-sm text-gray-500">
+                <p>Name: {order.user.name}</p>
+                <p>Email: {order.user.email}</p>
+                <p>Phone: {order.user.phone}</p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">Shipping Address</h3>
+              <div className="mt-2 text-sm text-gray-500">
+                <p>{order.user.address.street}</p>
+                <p>{order.user.address.city}, {order.user.address.state} {order.user.address.zipCode}</p>
+                <p>{order.user.address.country}</p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">Order Items</h3>
+              <div className="mt-2 space-y-2">
+                {order.orderItems.map((item) => (
+                  <div key={item._id} className="flex items-center justify-between text-sm">
+                    <div>
+                      <p className="font-medium text-gray-900">{item.name}</p>
+                      <p className="text-gray-500">Quantity: {item.quantity}</p>
+                    </div>
+                    <p className="font-medium text-gray-900">₹{(item.price * item.quantity).toFixed(2)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="border-t pt-4">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Subtotal</span>
+                <span className="font-medium text-gray-900">₹{order.itemsPrice.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm mt-1">
+                <span className="text-gray-500">Shipping</span>
+                <span className="font-medium text-gray-900">₹{order.shippingPrice.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-sm mt-1">
+                <span className="text-gray-500">Tax</span>
+                <span className="font-medium text-gray-900">₹{order.taxPrice.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-base font-medium mt-2 pt-2 border-t">
+                <span className="text-gray-900">Total</span>
+                <span className="text-primary-600">₹{order.totalPrice.toFixed(2)}</span>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">Payment Information</h3>
+              <div className="mt-2 text-sm text-gray-500">
+                <p>Type: {order.paymentInfo.type.toUpperCase()}</p>
+                <p>Status: {order.paymentInfo.status}</p>
+                <p>Payment ID: {order.paymentInfo.id}</p>
+                <p>Paid: {order.isPaid ? 'Yes' : 'No'}</p>
+                {order.paidAt && <p>Paid At: {format(new Date(order.paidAt), 'PPpp')}</p>}
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium text-gray-900">Order Status</h3>
+              <div className="mt-2 text-sm text-gray-500">
+                <p>Status: {order.orderStatus}</p>
+                <p>Delivered: {order.isDelivered ? 'Yes' : 'No'}</p>
+                {order.deliveredAt && <p>Delivered At: {format(new Date(order.deliveredAt), 'PPpp')}</p>}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -116,6 +218,13 @@ const NotificationDropdown = () => {
             </div>
           )}
         </div>
+      )}
+
+      {selectedOrder && (
+        <OrderDetailsModal
+          order={selectedOrder}
+          onClose={() => setSelectedOrder(null)}
+        />
       )}
     </div>
   );

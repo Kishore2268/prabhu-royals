@@ -197,7 +197,7 @@ const Dashboard = () => {
                                 </span>
                               </p>
                               <p className="text-sm text-gray-500">
-                                Order total: ₹{order.totalAmount?.toFixed(2) || '0.00'}
+                                Order total: ₹{order.totalPrice?.toFixed(2) || '0.00'}
                               </p>
                             </div>
                             <div className="text-right text-sm whitespace-nowrap text-gray-500">
