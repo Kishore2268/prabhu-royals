@@ -22,11 +22,24 @@ export const NotificationProvider = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      const newSocket = io(process.env.REACT_APP_API_URL || 'http://localhost:5000/api');
+      const newSocket = io(process.env.REACT_APP_API_URL || 'https://prabhu-royals.onrender.com/api', {
+        transports: ['websocket', 'polling'],
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        timeout: 10000,
+        autoConnect: true,
+        forceNew: true
+      });
+      
       setSocket(newSocket);
 
       newSocket.on('connect', () => {
         console.log('Connected to socket server');
+      });
+
+      newSocket.on('connect_error', (error) => {
+        console.error('Socket connection error:', error);
       });
 
       newSocket.on('notification', (notification) => {
@@ -34,7 +47,11 @@ export const NotificationProvider = ({ children }) => {
         setUnreadCount(prev => prev + 1);
       });
 
-      return () => newSocket.disconnect();
+      return () => {
+        if (newSocket) {
+          newSocket.disconnect();
+        }
+      };
     }
   }, []);
 

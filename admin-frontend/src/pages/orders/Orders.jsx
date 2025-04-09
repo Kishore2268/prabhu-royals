@@ -38,7 +38,7 @@ const Orders = () => {
       
       if (response?.data?.data) {
         setOrders(response.data.data);
-        setTotalPages(Math.ceil(response.data.pagination.total / itemsPerPage));
+        setTotalPages(Math.ceil((response.data.pagination?.total || 0) / itemsPerPage));
       } else {
         setOrders([]);
         setTotalPages(1);

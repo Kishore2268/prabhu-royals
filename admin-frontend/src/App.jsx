@@ -12,7 +12,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import { NotificationProvider } from './contexts/NotificationContext';
 
 function App() {
-  return (
+  return ( 
     <Router>
       <NotificationProvider>
         <Toaster position="top-right" />
