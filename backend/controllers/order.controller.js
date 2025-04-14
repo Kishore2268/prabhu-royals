@@ -1,5 +1,6 @@
 const Order = require('../models/order.model');
 const Notification = require('../models/notification.model');
+const Product = require('../models/product.model');
 const asyncHandler = require('express-async-handler');
 const { sendOrderConfirmationEmail, sendOrderNotificationEmail } = require('../utils/email');
 
@@ -42,27 +43,47 @@ exports.createOrder = asyncHandler(async (req, res) => {
   try {
     console.log('Creating order with data:', JSON.stringify(req.body, null, 2));
     
-    // Create the order first
+    // Update product stocks
+    for (const item of req.body.items) {
+      const product = await Product.findById(item.product);
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: `Product ${item.product} not found`
+        });
+      }
+      
+      if (product.stock < item.quantity) {
+        return res.status(400).json({
+          success: false,
+          message: `Insufficient stock for product ${product.name}`
+        });
+      }
+      
+      await product.updateStock(item.quantity);
+    }
+
+    // Create the order
     const order = await Order.create(req.body);
     console.log('Order created successfully:', order._id);
 
-    // Try to send email to customer
-    try {
-      await sendOrderConfirmationEmail(order);
-      console.log('Order confirmation email sent to customer');
-    } catch (emailError) {
-      console.error('Error sending order confirmation email:', emailError);
-    }
+    // Send emails in parallel
+    const emailPromises = [
+      sendOrderConfirmationEmail(order).catch(error => {
+        console.error('Failed to send order confirmation email:', error);
+        return { error: 'Failed to send confirmation email' };
+      }),
+      sendOrderNotificationEmail(order).catch(error => {
+        console.error('Failed to send admin notification email:', error);
+        return { error: 'Failed to send admin notification email' };
+      })
+    ];
 
-    // Try to send email to admin
-    try {
-      await sendOrderNotificationEmail(order);
-      console.log('Order notification email sent to admin');
-    } catch (adminEmailError) {
-      console.error('Error sending order notification email to admin:', adminEmailError);
-    }
+    // Wait for all email operations to complete
+    const emailResults = await Promise.all(emailPromises);
+    const emailErrors = emailResults.filter(result => result.error);
 
-    // Try to create notification
+    // Create notification
     try {
       await Notification.create({
         title: 'New Order Received',
@@ -75,9 +96,15 @@ exports.createOrder = asyncHandler(async (req, res) => {
       console.error('Error creating order notification:', notificationError);
     }
 
+    // Return response with email status
     res.status(201).json({
       success: true,
-      data: order
+      data: order,
+      emailStatus: {
+        confirmationSent: !emailResults[0].error,
+        notificationSent: !emailResults[1].error,
+        errors: emailErrors.length > 0 ? emailErrors : undefined
+      }
     });
   } catch (error) {
     console.error('Error creating order:', error);

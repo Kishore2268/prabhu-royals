@@ -28,11 +28,11 @@ export const CategoryCard = ({ image, title, subCategoryCount, onClick }) => {
       onClick={onClick}
       className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow duration-300"
     >
-      <div className="relative h-64 sm:h-64 md:h-72">
+      <div className="relative h-36 sm:h-48 md:h-64">
         <ImageWithFallback
           src={image}
           alt={title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
         />
       </div>
       <div className="p-4">
@@ -49,11 +49,11 @@ export const SubcategoryCard = ({ image, title, productCount, onClick }) => {
       onClick={onClick}
       className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow duration-300"
     >
-      <div className="relative h-64 sm:h-64 md:h-72">
+      <div className="relative h-36 sm:h-48 md:h-64">
         <ImageWithFallback
           src={image}
           alt={title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
         />
       </div>
       <div className="p-4">
@@ -67,11 +67,11 @@ export const SubcategoryCard = ({ image, title, productCount, onClick }) => {
 export const ProductCard = ({ image, title, description, price, onAddToCart, onEdit, onDelete, onQuantityChange, quantity }) => {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:shadow-lg hover:scale-[1.02]">
-      <div className="relative h-64 sm:h-72 md:h-80">
+      <div className="relative h-36 sm:h-48 md:h-64">
         <ImageWithFallback
           src={image?.url || image}
           alt={title}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
         />
       </div>
       <div className="p-4">

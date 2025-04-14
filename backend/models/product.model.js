@@ -22,9 +22,12 @@ const productSchema = new mongoose.Schema({
   },
   stock: {
     type: Number,
-    required: [true, 'Please provide product stock'],
-    min: [0, 'Stock cannot be negative'],
+    required: true,
     default: 0
+  },
+  inStock: {
+    type: Boolean,
+    default: true
   },
   category: {
     type: mongoose.Schema.Types.ObjectId,
@@ -95,6 +98,13 @@ productSchema.index({ category: 1 });
 productSchema.index({ subcategory: 1 });
 productSchema.index({ price: 1 });
 productSchema.index({ rating: -1 });
+
+// Add method to update stock
+productSchema.methods.updateStock = async function(quantity) {
+  this.stock -= quantity;
+  this.inStock = this.stock > 0;
+  await this.save();
+};
 
 const Product = mongoose.model('Product', productSchema);
 

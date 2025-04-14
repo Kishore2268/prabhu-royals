@@ -10,7 +10,7 @@ import AllProducts from './pages/AllProducts';
 import AllSubcategories from './pages/AllSubcategories';
 import Search from './pages/Search';
 import { CartProvider } from './context/CartContext';
-
+import ContactUs from './pages/ContactUs';
 const App = () => {
   return (
     <Router>
@@ -24,6 +24,7 @@ const App = () => {
             <Route path="all-products" element={<AllProducts />} />
             <Route path="all-subcategories" element={<AllSubcategories />} />
             <Route path="search" element={<Search />} />
+            <Route path="contact-us" element={<ContactUs />} />
           </Route>
         </Routes>
         <Toaster position="top-right" />

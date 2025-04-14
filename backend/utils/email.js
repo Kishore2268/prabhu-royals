@@ -1,102 +1,75 @@
 const nodemailer = require('nodemailer');
 
-const sendEmail = async (options) => {
-  try {
-    // Create transporter
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
-      secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
-      },
-      tls: {
-        rejectUnauthorized: false // Accept self-signed certificates
-      }
-    });
-
-    // Verify connection configuration
-    await transporter.verify();
-    console.log('Email server connection verified');
-
-    // Define email options
-    const message = {
-      from: `${process.env.SMTP_FROM_NAME || 'Royal Mobiles'} <${process.env.SMTP_USER}>`,
-      to: options.email,
-      subject: options.subject,
-      text: options.message,
-      html: options.html
-    };
-
-    // Send email
-    const info = await transporter.sendMail(message);
-    console.log('Email sent:', info.messageId);
-    return info;
-  } catch (error) {
-    console.error('Error sending email:', error);
-    // Don't throw the error, just log it
-    return { error: error.message };
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: process.env.SMTP_PORT,
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS
   }
-};
+});
 
 const sendOrderConfirmationEmail = async (order) => {
-  try {
-    const message = `
-      <h2>Thank you for your order!</h2>
-      <p>Order ID: ${order._id}</p>
-      <p>Total Amount: ₹${order.totalPrice}</p>
-      <h3>Order Details:</h3>
-      <ul>
-        ${order.orderItems.map(item => `
-          <li>${item.name} x ${item.quantity} - ₹${item.price * item.quantity}</li>
-        `).join('')}
-      </ul>
-      <p>We will process your order shortly.</p>
-    `;
+  const mailOptions = {
+    from: process.env.SMTP_USER,
+    to: order.user.email,
+    subject: 'Order Confirmation - Royal Mobiles',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #2563eb;">Order Confirmation</h2>
+        <p>Dear ${order.user.name},</p>
+        <p>Thank you for your order with Royal Mobiles. Your order has been received and is being processed.</p>
+        <p><strong>Order Details:</strong></p>
+        <ul>
+          <li>Order ID: ${order._id}</li>
+          <li>Order Date: ${new Date(order.createdAt).toLocaleDateString()}</li>
+          <li>Total Amount: ₹${order.totalPrice}</li>
+        </ul>
+        <p>The retailer will contact you shortly regarding your order. Please be patient.</p>
+        <p>If you have any questions, please don't hesitate to contact us.</p>
+        <p>Best regards,<br>Royal Mobiles Team</p>
+      </div>
+    `
+  };
 
-    return await sendEmail({
-      email: order.user.email,
-      subject: 'Order Confirmation',
-      message: 'Thank you for your order!',
-      html: message
-    });
+  try {
+    await transporter.sendMail(mailOptions);
   } catch (error) {
-    console.error('Error in sendOrderConfirmationEmail:', error);
-    return { error: error.message };
+    console.error('Error sending order confirmation email:', error);
+    throw error;
   }
 };
 
 const sendOrderNotificationEmail = async (order) => {
-  try {
-    const message = `
-      <h2>New Order Received!</h2>
-      <p>Order ID: ${order._id}</p>
-      <p>Customer: ${order.user.name}</p>
-      <p>Email: ${order.user.email}</p>
-      <p>Total Amount: ₹${order.totalPrice}</p>
-      <h3>Order Details:</h3>
-      <ul>
-        ${order.orderItems.map(item => `
-          <li>${item.name} x ${item.quantity} - ₹${item.price * item.quantity}</li>
-        `).join('')}
-      </ul>
-    `;
+  const mailOptions = {
+    from: process.env.SMTP_USER,
+    to: process.env.ADMIN_EMAIL,
+    subject: 'New Order Received - Royal Mobiles',
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #2563eb;">New Order Notification</h2>
+        <p>A new order has been received in the system.</p>
+        <p><strong>Order Details:</strong></p>
+        <ul>
+          <li>Order ID: ${order._id}</li>
+          <li>Customer Name: ${order.user.name}</li>
+          <li>Customer Email: ${order.user.email}</li>
+          <li>Customer Phone: ${order.user.phone}</li>
+          <li>Order Date: ${new Date(order.createdAt).toLocaleDateString()}</li>
+          <li>Total Amount: ₹${order.totalPrice}</li>
+        </ul>
+        <p>Please check the admin panel for more details.</p>
+      </div>
+    `
+  };
 
-    return await sendEmail({
-      email: process.env.ADMIN_EMAIL,
-      subject: 'New Order Notification',
-      message: 'A new order has been received!',
-      html: message
-    });
+  try {
+    await transporter.sendMail(mailOptions);
   } catch (error) {
-    console.error('Error in sendOrderNotificationEmail:', error);
-    return { error: error.message };
+    console.error('Error sending order notification email:', error);
+    throw error;
   }
 };
 
-module.exports = {
-  sendEmail,
-  sendOrderConfirmationEmail,
-  sendOrderNotificationEmail
-}; 
+module.exports = { sendOrderConfirmationEmail, sendOrderNotificationEmail }; 
