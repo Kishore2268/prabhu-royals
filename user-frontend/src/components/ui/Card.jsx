@@ -16,7 +16,7 @@ const ImageWithFallback = ({ src, alt, className }) => {
     <img
       src={src}
       alt={alt}
-      className={className}
+      className={`${className} object-cover`}
       onError={() => setError(true)}
     />
   );
@@ -28,11 +28,11 @@ export const CategoryCard = ({ image, title, subCategoryCount, onClick }) => {
       onClick={onClick}
       className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow duration-300"
     >
-      <div className="relative h-36 sm:h-48 md:h-64">
+      <div className="relative h-36 sm:h-48 md:h-64 w-full">
         <ImageWithFallback
           src={image}
           alt={title}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-cover"
         />
       </div>
       <div className="p-4">
@@ -49,11 +49,11 @@ export const SubcategoryCard = ({ image, title, productCount, onClick }) => {
       onClick={onClick}
       className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer hover:shadow-lg transition-shadow duration-300"
     >
-      <div className="relative h-36 sm:h-48 md:h-64">
+      <div className="relative h-36 sm:h-48 md:h-64 w-full">
         <ImageWithFallback
           src={image}
           alt={title}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-cover"
         />
       </div>
       <div className="p-4">
@@ -64,14 +64,24 @@ export const SubcategoryCard = ({ image, title, productCount, onClick }) => {
   );
 };
 
-export const ProductCard = ({ image, title, description, price, onAddToCart, onEdit, onDelete, onQuantityChange, quantity }) => {
+export const ProductCard = ({ image, title, description, price, onAddToCart, onEdit, onDelete, onQuantityChange, quantity, stock }) => {
+  const getStockStatus = () => {
+    if (stock === 0) {
+      return <span className="text-red-600 font-semibold">Out of Stock</span>;
+    }
+    if (stock < 10) {
+      return <span className="text-red-600 font-semibold">Hurry! Only {stock} left</span>;
+    }
+    return <span className="text-green-600 font-semibold">{stock} in stock</span>;
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:shadow-lg hover:scale-[1.02]">
-      <div className="relative h-36 sm:h-48 md:h-64">
+      <div className="relative h-36 sm:h-48 md:h-64 w-full">
         <ImageWithFallback
           src={image?.url || image}
           alt={title}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-cover"
         />
       </div>
       <div className="p-4">
@@ -106,17 +116,26 @@ export const ProductCard = ({ image, title, description, price, onAddToCart, onE
             </div>
           )}
         </div>
+
+        <div className="mb-2">
+          {getStockStatus()}
+        </div>
         
         {onAddToCart && (
-          <div className="flex justify-center mb-2">
+          <div className="flex justify-center">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onAddToCart();
               }}
-              className="w-full bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 transition-colors duration-300 font-medium"
+              disabled={stock === 0}
+              className={`w-full px-4 py-2 rounded-md font-medium transition-colors duration-300 ${
+                stock === 0
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-primary-600 hover:bg-primary-700 text-white'
+              }`}
             >
-              Add to Cart
+              {stock === 0 ? 'Out of Stock' : 'Add to Cart'}
             </button>
           </div>
         )}
