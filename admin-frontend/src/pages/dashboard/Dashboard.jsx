@@ -81,11 +81,13 @@ const Dashboard = () => {
         productsRes,
         ordersRes
       ] = await Promise.all([
-        getCategories({ limit: 1000 }), // Fetch all categories
-        getSubcategories({ limit: 1000 }), // Fetch all subcategories
+        getCategories(),
+        getSubcategories(),
         getProducts({ limit: 1000 }), // Fetch all products
         getOrders({ limit: 5, sort: '-createdAt' }) // Get 5 most recent orders
       ]);
+
+      console.log('Products response:', productsRes.data); // Debug log
 
       // Set stats with proper error handling
       setStats({
