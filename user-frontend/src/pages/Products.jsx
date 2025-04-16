@@ -93,7 +93,7 @@ const Products = () => {
           <p className="text-gray-600 mt-2">Subcategory: {subcategory.name}</p>
         )}
       </div>
-      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
         {products.map((product) => (
           <ProductCard
             key={product._id}
@@ -101,6 +101,7 @@ const Products = () => {
             title={product.name}
             description={product.description}
             price={product.price}
+            stock={product.stock}
             onAddToCart={() => handleAddToCart(product)}
           />
         ))}
